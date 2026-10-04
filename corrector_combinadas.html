@@ -29,7 +29,7 @@ canvas{display:block;width:100%}
 </style></head><body>
 <div class="box">
 <div class="panel">
-<input type="text" id="expr" value="(5-(6))^3" readonly>
+<input type="text" id="expr" value="7+(-3)-(+10)-(-8)-(+5)" readonly>
 <div class="actions">
 <button onclick="render()">▶ Resolver</button>
 <button class="save" onclick="guardarPNG()">💾 Guardar PNG</button>
@@ -58,9 +58,19 @@ return null;
 function tokenizar(str){
 str=str.replace(/\s+/g,'').replace(/:/g,'/');const t=[];let i=0;
 while(i<str.length){
-let c=str[i];if(/[0-9]/.test(c)){let n='';while(i<str.length&&/[0-9]/.test(str[i]))n+=str[i++];t.push({type:'NUM',val:parseInt(n)});}
+let c=str[i];
+if(/[0-9]/.test(c)){
+let n='';while(i<str.length&&/[0-9]/.test(str[i]))n+=str[i++];t.push({type:'NUM',val:parseInt(n)});
+}
 else if(['+','-','*','/','(',')','^'].includes(c)){
-if(c==='-'){let p=t[t.length-1];if(!p||p.type==='OP'||(p.type==='PAREN'&&p.val==='(')){i++;let n='';while(i<str.length&&/[0-9]/.test(str[i]))n+=str[i++];if(n!==''){t.push({type:'NUM',val:-parseInt(n)});continue;}}}
+if(c==='-'||c==='+'){
+let p=t[t.length-1];
+if(!p||p.type==='OP'||(p.type==='PAREN'&&p.val==='(')){
+i++;let signo=c==='-'?-1:1;let n='';
+while(i<str.length&&/[0-9]/.test(str[i]))n+=str[i++];
+if(n!==''){t.push({type:'NUM',val:signo*parseInt(n)});continue;}
+}
+}
 let pr=(c==='+'||c==='-')?1:((c==='*'||c==='/')?2:(c==='^'?3:0));
 t.push({type:c==='('||c===')'?'PAREN':'OP',val:c,prec:pr});i++;
 }}return t;
@@ -102,7 +112,12 @@ function generarLineaPasos(tokens,resIdx){
 let textoCompleto="",inicioSubrayado=0,finSubrayado=0;
 for(let i=0;i<tokens.length;i++){
 let t=tokens[i],trozo="";
-if(t.type==='NUM')trozo=t.val<0?`(${t.val})`:`${t.val}`;
+if(t.type==='NUM'){
+let prev=i>0?tokens[i-1]:null;
+let next=i<tokens.length-1?tokens[i+1]:null;
+let yaTieneParen=(prev&&prev.type==='PAREN'&&prev.val==='(')&&(next&&next.type==='PAREN'&&next.val===')');
+trozo=(t.val<0&&!yaTieneParen)?`(${t.val})`:`${t.val}`;
+}
 else if(t.type==='PAREN')trozo=t.val;
 else trozo=t.val==='*'?" * ":(t.val==='/'?" : ":(t.val==='^'?"^":` ${t.val} `));
 if(resIdx>=0&&i===resIdx-1)inicioSubrayado=textoCompleto.length;
@@ -137,7 +152,6 @@ function render(){
 const canvas=document.getElementById('cv'),ctx=canvas.getContext('2d');
 const inp=document.getElementById('expr').value,err=validar(inp);
 
-// Recalcular y reajustar altura dinámica si es necesario
 let pasosTemp = [];
 if(!err){
     try{
@@ -157,7 +171,6 @@ if(!err){
     }catch(e){}
 }
 
-// Calcular la altura requerida para que quepan todos los pasos
 const alturaRequerida = 110 + (pasosTemp.length * 45) + 30;
 canvas.height = Math.max(520, alturaRequerida);
 
@@ -166,7 +179,6 @@ ctx.fillRect(0,0,canvas.width,canvas.height);
 
 if(err){ctx.font="bold 16px Arial";ctx.fillStyle="#dc2626";ctx.fillText("❌ "+err,40,50);return;}
 
-// Encabezado
 const labelTexto = "OPERACIÓN A CALCULAR:";
 ctx.font = "bold 13px 'Segoe UI', system-ui, -apple-system, sans-serif";
 const widthLabel = ctx.measureText(labelTexto).width;
