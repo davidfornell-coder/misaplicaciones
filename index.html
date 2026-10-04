@@ -4,13 +4,128 @@
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>Mis Aplicaciones de Matemáticas</title>
+ <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+ <style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #1e1e2f 0%, #2a2a40 100%);
+    color: #ffffff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem 1.5rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #ff7e5f, #feb47b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+  }
+
+  header p {
+    color: #a0a0c0;
+    font-size: 1.1rem;
+  }
+
+  .grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    max-width: 1000px;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card:hover {
+    transform: translateY(-10px);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+  }
+
+  .icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .card h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+    color: #ffffff;
+  }
+
+  .btn {
+    display: inline-block;
+    width: 100%;
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #ffffff;
+    background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+    box-shadow: 0 4px 15px rgba(37, 117, 252, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(37, 117, 252, 0.5);
+  }
+ </style>
 </head>
 <body>
- <h1>Repositorio de Aplicaciones Matemáticas</h1>
- <ul>
-  <li><a href="corrector_combinadas.html">Calculadora Combinadas</a></li>
-  <li><a href="mision_numerica.html">Recta Numérica</a></li>
-  <li><a href="puzzle_enteros.html">Puzzle Números Enteros</a></li>
- </ul>
+
+ <header>
+  <h1>Aplicaciones Matemáticas</h1>
+  <p>Selecciona una actividad para comenzar a practicar</p>
+ </header>
+
+ <main class="grid-container">
+  <div class="card">
+   <div class="icon">🧮</div>
+   <h2>Calculadora Combinadas</h2>
+   <a href="corrector_combinadas.html" class="btn">Entrar</a>
+  </div>
+
+  <div class="card">
+   <div class="icon">📏</div>
+   <h2>Recta Numérica</h2>
+   <a href="mision_numerica.html" class="btn">Entrar</a>
+  </div>
+
+  <div class="card">
+   <div class="icon">🧩</div>
+   <h2>Puzzle Números Enteros</h2>
+   <a href="puzzle_enteros.html" class="btn">Entrar</a>
+  </div>
+ </main>
+
 </body>
 </html>
