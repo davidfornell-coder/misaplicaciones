@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle de Desigualdades - Versión 1</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        /* DATOS DEL ALUMNO */
+        .student-info-container {
+            background: #ffffff;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 15px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 540px;
+            width: 100%;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        .input-group input {
+            padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            outline: none;
+        }
+
+        .difficulty-container {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        select {
+            padding: 8px 12px;
+            font-size: 15px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            outline: none;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        p.instructions {
+            color: #64748b;
+            text-align: center;
+            max-width: 540px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.4;
+            min-height: 40px;
+        }
+
+        /* BANCO DE FICHAS ARRASTRABLES */
+        .tiles-container {
+            background: #ffffff;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+        }
+
+        .tiles-container h3 {
+            margin: 0 0 12px 0;
+            font-size: 15px;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tiles-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            min-height: 60px;
+            padding: 5px;
+        }
+
+        /* TABLERO DE JUEGO */
+        .board-container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: 75px 35px 75px 35px 75px;
+            grid-template-rows: 60px 35px 60px 35px 60px;
+            align-items: center;
+            justify-items: center;
+        }
+
+        /* CASILLAS Y FICHAS */
+        .drop-zone {
+            width: 75px;
+            height: 60px;
+            border: 2px dashed #94a3b8;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: scale(1.03);
+        }
+
+        .tile {
+            width: 68px;
+            height: 52px;
+            background-color: #2563eb;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        .tile:active {
+            cursor: grabbing;
+        }
+
+        .tile.dragging {
+            opacity: 0.4;
+        }
+
+        .comp-h, .comp-v {
+            font-size: 22px;
+            font-weight: bold;
+            color: #0284c7;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 18px;
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            background-color: #2563eb;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        button.secondary {
+            background-color: #64748b;
+        }
+
+        button.secondary:hover {
+            background-color: #475569;
+        }
+
+        #message {
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            height: 24px;
+            text-align: center;
+        }
+
+        .success { color: #16a34a; }
+        .error { color: #dc2626; }
+
+        /* SECCIÓN DEL CERTIFICADO */
+        #certificate-container {
+            display: none;
+            margin-top: 25px;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        #certificate-canvas {
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .btn-download {
+            background-color: #16a34a;
+        }
+
+        .btn-download:hover {
+            background-color: #15803d;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>PUZZLE DE NÚMEROS ENTEROS</h1>
+
+    <!-- Datos del alumno -->
+    <div class="student-info-container">
+        <div class="input-group">
+            <label for="student-name">Nombre y Apellidos:</label>
+            <input type="text" id="student-name" placeholder="Ej. María García" required>
+        </div>
+        <div class="input-group">
+            <label for="student-group">Grupo / Clase:</label>
+            <input type="text" id="student-group" placeholder="Ej. 3º ESO A" required>
+        </div>
+    </div>
+
+    <div class="difficulty-container">
+        <label for="difficulty">Nivel de Dificultad:</label>
+        <select id="difficulty" onchange="generatePuzzle()">
+            <option value="1">Nivel 1: Del 1 al 9</option>
+            <option value="2">Nivel 2: Enteros (-20 a +20)</option>
+            <option value="3">Nivel 3: Valor Absoluto |x| y Opuesto Op(x)</option>
+        </select>
+    </div>
+
+    <p class="instructions" id="instructions-text"></p>
+
+    <!-- Banco de fichas disponibles para arrastrar -->
+    <div class="tiles-container">
+        <h3>Fichas Disponibles (Arrastra a la cuadrícula)</h3>
+        <div class="tiles-grid" id="tiles-bank" ondragover="handleDragOver(event)" ondrop="handleDropToBank(event)">
+            <!-- Se generan dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Tablero con casillas de soltar -->
+    <div class="board-container">
+        <div class="board" id="board">
+            <!-- Fila 1 -->
+            <div class="drop-zone" data-row="0" data-col="0" style="grid-row: 1; grid-column: 1;"></div>
+            <div class="comp-h" data-r="0" data-c="0" style="grid-row: 1; grid-column: 2;"></div>
+            <div class="drop-zone" data-row="0" data-col="1" style="grid-row: 1; grid-column: 3;"></div>
+            <div class="comp-h" data-r="0" data-c="1" style="grid-row: 1; grid-column: 4;"></div>
+            <div class="drop-zone" data-row="0" data-col="2" style="grid-row: 1; grid-column: 5;"></div>
+
+            <!-- Verticales 1-2 -->
+            <div class="comp-v" data-r="0" data-c="0" style="grid-row: 2; grid-column: 1;"></div>
+            <div class="comp-v" data-r="0" data-c="1" style="grid-row: 2; grid-column: 3;"></div>
+            <div class="comp-v" data-r="0" data-c="2" style="grid-row: 2; grid-column: 5;"></div>
+
+            <!-- Fila 2 -->
+            <div class="drop-zone" data-row="1" data-col="0" style="grid-row: 3; grid-column: 1;"></div>
+            <div class="comp-h" data-r="1" data-c="0" style="grid-row: 3; grid-column: 2;"></div>
+            <div class="drop-zone" data-row="1" data-col="1" style="grid-row: 3; grid-column: 3;"></div>
+            <div class="comp-h" data-r="1" data-c="1" style="grid-row: 3; grid-column: 4;"></div>
+            <div class="drop-zone" data-row="1" data-col="2" style="grid-row: 3; grid-column: 5;"></div>
+
+            <!-- Verticales 2-3 -->
+            <div class="comp-v" data-r="1" data-c="0" style="grid-row: 4; grid-column: 1;"></div>
+            <div class="comp-v" data-r="1" data-c="1" style="grid-row: 4; grid-column: 3;"></div>
+            <div class="comp-v" data-r="1" data-c="2" style="grid-row: 4; grid-column: 5;"></div>
+
+            <!-- Fila 3 -->
+            <div class="drop-zone" data-row="2" data-col="0" style="grid-row: 5; grid-column: 1;"></div>
+            <div class="comp-h" data-r="2" data-c="0" style="grid-row: 5; grid-column: 2;"></div>
+            <div class="drop-zone" data-row="2" data-col="1" style="grid-row: 5; grid-column: 3;"></div>
+            <div class="comp-h" data-r="2" data-c="1" style="grid-row: 5; grid-column: 4;"></div>
+            <div class="drop-zone" data-row="2" data-col="2" style="grid-row: 5; grid-column: 5;"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button onclick="checkSolution()">Comprobar</button>
+        <button class="secondary" onclick="resetTilesToBank()">Reiniciar Fichas</button>
+        <button class="secondary" onclick="generatePuzzle()">Nueva Partida</button>
+    </div>
+
+    <div id="message"></div>
+
+    <!-- Área del Certificado generado -->
+    <div id="certificate-container">
+        <h3>Certificado de Superación</h3>
+        <canvas id="certificate-canvas" width="600" height="400"></canvas>
+        <button class="btn-download" onclick="downloadCertificate()">Descargar Imagen Certificado</button>
+    </div>
+
+    <script>
+        const instructions = {
+            1: "Arrastra las 9 fichas del <strong>1 al 9</strong> a las casillas para cumplir con todas las desigualdades.",
+            2: "Arrastra las 9 fichas con enteros (entre <strong>-20 y +20</strong>) respetando los signos de mayor/menor.",
+            3: "Arrastra las fichas con expresiones de valor absoluto <strong>|x|</strong> y opuestos <strong>Op(x)</strong> para resolver el tablero."
+        };
+
+        let draggedTile = null;
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Generar las 9 expresiones/números según la dificultad
+        function generateTileItems(level) {
+            if (level === 1) {
+                return [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => ({ display: String(n), val: n }));
+            } else if (level === 2) {
+                let set = new Set();
+                while (set.size < 9) set.add(getRandomInt(-20, 20));
+                return Array.from(set).map(n => ({ display: n > 0 ? `+${n}` : String(n), val: n }));
+            } else {
+                // Nivel 3: Mezcla de enteros, valores absolutos y opuestos
+                let valuesSet = new Set();
+                while (valuesSet.size < 9) valuesSet.add(getRandomInt(-20, 20));
+                
+                let targetVals = Array.from(valuesSet);
+                return targetVals.map(val => {
+                    let type = Math.floor(Math.random() * 3); // 0: normal, 1: abs, 2: opuesto
+                    let display = "";
+
+                    if (type === 1 && val >= 0) {
+                        let innerVal = Math.random() < 0.5 ? val : -val;
+                        display = `|${innerVal}|`;
+                    } else if (type === 2) {
+                        display = `Op(${-val})`;
+                    } else {
+                        display = val > 0 ? `+${val}` : String(val);
+                    }
+
+                    return { display: display, val: val };
+                });
+            }
+        }
+
+        function generatePuzzle() {
+            const level = parseInt(document.getElementById('difficulty').value, 10);
+            document.getElementById('instructions-text').innerHTML = instructions[level];
+            document.getElementById('message').textContent = '';
+            document.getElementById('certificate-container').style.display = 'none';
+
+            // 1. Obtener ítems para las fichas según la dificultad
+            const tileItems = generateTileItems(level);
+
+            // 2. Crear solución internamente para derivar desigualdades
+            const itemsCopy = [...tileItems];
+            for (let i = itemsCopy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [itemsCopy[i], itemsCopy[j]] = [itemsCopy[j], itemsCopy[i]];
+            }
+
+            const solution = [
+                [itemsCopy[0].val, itemsCopy[1].val, itemsCopy[2].val],
+                [itemsCopy[3].val, itemsCopy[4].val, itemsCopy[5].val],
+                [itemsCopy[6].val, itemsCopy[7].val, itemsCopy[8].val]
+            ];
+
+            // 3. Renderizar comparadores horizontales y verticales
+            document.querySelectorAll('.comp-h').forEach(el => {
+                const r = parseInt(el.dataset.r, 10);
+                const c = parseInt(el.dataset.c, 10);
+                el.textContent = solution[r][c] < solution[r][c + 1] ? '<' : '>';
+            });
+
+            document.querySelectorAll('.comp-v').forEach(el => {
+                const r = parseInt(el.dataset.r, 10);
+                const c = parseInt(el.dataset.c, 10);
+                el.textContent = solution[r][c] < solution[r + 1][c] ? '∧' : '∨';
+            });
+
+            // 4. Barajar las fichas para presentarlas al usuario en el banco
+            const shuffledTiles = [...tileItems];
+            for (let i = shuffledTiles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledTiles[i], shuffledTiles[j]] = [shuffledTiles[j], shuffledTiles[i]];
+            }
+
+            // Limpiar zonas de soltar y el banco de fichas
+            document.querySelectorAll('.drop-zone').forEach(zone => zone.innerHTML = '');
+            const bank = document.getElementById('tiles-bank');
+            bank.innerHTML = '';
+
+            // Crear los elementos arrastrabes
+            shuffledTiles.forEach((item, idx) => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.id = `tile-${idx}-${Date.now()}`;
+                tile.draggable = true;
+                tile.textContent = item.display;
+                tile.dataset.value = item.val;
+
+                tile.addEventListener('dragstart', handleDragStart);
+                tile.addEventListener('dragend', handleDragEnd);
+
+                bank.appendChild(tile);
+            });
+
+            setupDropZones();
+        }
+
+        // --- LÓGICA DE DRAG & DROP ---
+
+        function handleDragStart(e) {
+            draggedTile = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', e.target.id);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            draggedTile = null;
+            document.querySelectorAll('.drop-zone').forEach(zone => zone.classList.remove('drag-over'));
+        }
+
+        function setupDropZones() {
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('dragenter', handleDragEnter);
+                zone.addEventListener('dragleave', handleDragLeave);
+                zone.addEventListener('drop', handleDropToZone);
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            if (e.currentTarget.classList.contains('drop-zone')) {
+                e.currentTarget.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            if (e.currentTarget.classList.contains('drop-zone')) {
+                e.currentTarget.classList.remove('drag-over');
+            }
+        }
+
+        function handleDropToZone(e) {
+            e.preventDefault();
+            const zone = e.currentTarget;
+            zone.classList.remove('drag-over');
+
+            if (draggedTile) {
+                // Si la casilla ya tenía una ficha, devolverla al banco
+                if (zone.children.length > 0) {
+                    document.getElementById('tiles-bank').appendChild(zone.children[0]);
+                }
+                zone.appendChild(draggedTile);
+            }
+        }
+
+        function handleDropToBank(e) {
+            e.preventDefault();
+            const bank = document.getElementById('tiles-bank');
+            if (draggedTile) {
+                bank.appendChild(draggedTile);
+            }
+        }
+
+        function resetTilesToBank() {
+            const bank = document.getElementById('tiles-bank');
+            document.querySelectorAll('.tile').forEach(tile => {
+                bank.appendChild(tile);
+            });
+            document.getElementById('message').textContent = '';
+            document.getElementById('certificate-container').style.display = 'none';
+        }
+
+        // --- VALIDACIÓN DE LA SOLUCIÓN ---
+
+        function checkSolution() {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = '';
+            messageEl.className = '';
+
+            const studentName = document.getElementById('student-name').value.trim();
+            const studentGroup = document.getElementById('student-group').value.trim();
+
+            if (!studentName || !studentGroup) {
+                showMessage("Por favor, introduce tu Nombre, Apellidos y Grupo antes de comprobar.", "error");
+                return;
+            }
+
+            const grid = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+            let allFilled = true;
+
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                const r = parseInt(zone.dataset.row, 10);
+                const c = parseInt(zone.dataset.col, 10);
+
+                if (zone.children.length === 0) {
+                    allFilled = false;
+                } else {
+                    const tile = zone.children[0];
+                    grid[r][c] = parseInt(tile.dataset.value, 10);
+                }
+            });
+
+            if (!allFilled) {
+                showMessage("Debes colocar una ficha en cada una de las 9 casillas.", "error");
+                return;
+            }
+
+            // Validar desigualdades horizontales
+            const compH = document.querySelectorAll('.comp-h');
+            for (let el of compH) {
+                const r = parseInt(el.dataset.r, 10);
+                const c = parseInt(el.dataset.c, 10);
+                const symbol = el.textContent;
+                const left = grid[r][c];
+                const right = grid[r][c + 1];
+
+                if ((symbol === '<' && !(left < right)) || (symbol === '>' && !(left > right))) {
+                    showMessage(`Error: El valor (${left}) no es ${symbol === '<' ? 'menor' : 'mayor'} que (${right}).`, "error");
+                    return;
+                }
+            }
+
+            // Validar desigualdades verticales
+            const compV = document.querySelectorAll('.comp-v');
+            for (let el of compV) {
+                const r = parseInt(el.dataset.r, 10);
+                const c = parseInt(el.dataset.c, 10);
+                const symbol = el.textContent;
+                const top = grid[r][c];
+                const bottom = grid[r + 1][c];
+
+                if ((symbol === '∧' && !(top < bottom)) || (symbol === '∨' && !(top > bottom))) {
+                    showMessage(`Error: El valor (${top}) no es ${symbol === '∧' ? 'menor' : 'mayor'} que (${bottom}).`, "error");
+                    return;
+                }
+            }
+
+            showMessage("¡Excelente! Has resuelto el puzzle correctamente.", "success");
+            generateCertificateImage(studentName, studentGroup);
+        }
+
+        function showMessage(msg, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = msg;
+            messageEl.className = type;
+        }
+
+        // --- GENERACIÓN DEL CERTIFICADO EN CANVAS ---
+
+        function generateCertificateImage(name, group) {
+            const canvas = document.getElementById('certificate-canvas');
+            const ctx = canvas.getContext('2d');
+            const levelSelect = document.getElementById('difficulty');
+            const levelText = levelSelect.options[levelSelect.selectedIndex].text;
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            // Fondo con bordes
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#2563eb';
+            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#0284c7';
+            ctx.strokeRect(18, 18, canvas.width - 36, canvas.height - 36);
+
+            // Título
+            ctx.fillStyle = '#1e293b';
+            ctx.font = 'bold 24px "Segoe UI", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('CERTIFICADO DE SUPERACIÓN', canvas.width / 2, 60);
+
+            ctx.fillStyle = '#2563eb';
+            ctx.font = 'bold 18px "Segoe UI", sans-serif';
+            ctx.fillText('Puzzle de Desigualdades - Versión 1', canvas.width / 2, 90);
+
+            // Línea divisoria
+            ctx.beginPath();
+            ctx.moveTo(50, 105);
+            ctx.lineTo(canvas.width - 50, 105);
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.stroke();
+
+            // Texto descriptivo
+            ctx.fillStyle = '#475569';
+            ctx.font = '15px "Segoe UI", sans-serif';
+            ctx.fillText('Se certifica que el/la alumno/a:', canvas.width / 2, 135);
+
+            // Nombre del Alumno
+            ctx.fillStyle = '#0f172a';
+            ctx.font = 'bold 22px "Segoe UI", sans-serif';
+            ctx.fillText(name, canvas.width / 2, 170);
+
+            // Grupo
+            ctx.fillStyle = '#334155';
+            ctx.font = '16px "Segoe UI", sans-serif';
+            ctx.fillText(`Grupo / Clase: ${group}`, canvas.width / 2, 200);
+
+            // Nivel Superado
+            ctx.fillStyle = '#16a34a';
+            ctx.font = 'bold 18px "Segoe UI", sans-serif';
+            ctx.fillText(`Ha completado con éxito el: ${levelText}`, canvas.width / 2, 245);
+
+            // Fecha y Hora
+            ctx.fillStyle = '#64748b';
+            ctx.font = '14px "Segoe UI", sans-serif';
+            ctx.fillText(`Fecha: ${dateStr}  |  Hora: ${timeStr}`, canvas.width / 2, 300);
+
+            // Sello / Firma
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'italic 12px "Segoe UI", sans-serif';
+            ctx.fillText('Verificado automáticamente por el sistema de evaluación', canvas.width / 2, 350);
+
+            document.getElementById('certificate-container').style.display = 'flex';
+        }
+
+        function downloadCertificate() {
+            const canvas = document.getElementById('certificate-canvas');
+            const link = document.createElement('a');
+            const studentName = document.getElementById('student-name').value.trim() || 'alumno';
+            
+            link.download = `Certificado_Puzzle_Desigualdades_${studentName.replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Cargar partida inicial al abrir la página
+        generatePuzzle();
+    </script>
+</body>
+</html>

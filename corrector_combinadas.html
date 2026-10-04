@@ -1,0 +1,209 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Prototipo V4 - Completo</title>
+<style>
+body{font-family:sans-serif;background:#eef2f3;text-align:center;padding:10px;margin:0}
+.box{display:flex;flex-direction:column;align-items:center;gap:10px;max-width:750px;margin:0 auto}
+.panel{background:#fff;padding:12px;border-radius:10px;width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;box-shadow:0 4px 6px rgba(0,0,0,0.05)}
+input{width:100%;padding:14px;font-size:24px;border:2px solid #cbd5e1;border-radius:8px;font-family:'Fira Code','Courier New',monospace;font-weight:bold;color:#1e293b;background:#f8fafc;text-align:center;letter-spacing:1px;box-sizing:border-box}
+.actions{display:flex;gap:8px;justify-content:center;width:100%}
+button{padding:12px 20px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:15px;flex:1}
+button.rst{background:#64748b}
+button.save{background:#059669}
+.keyb{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;width:100%;background:#fff;padding:12px;border-radius:10px;box-sizing:border-box;box-shadow:0 4px 6px rgba(0,0,0,0.05)}
+.keyb button{padding:14px;font-size:20px;font-weight:bold;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;cursor:pointer;color:#334155}
+.keyb button:active{background:#e2e8f0}
+.keyb .op{background:#f1f5f9;color:#2563eb}
+.keyb .clr{background:#fee2e2;color:#dc2626}
+.keyb .del{background:#ffedd5;color:#ea580c}
+
+/* Estilos ajustados para el contenedor con scroll y canvas de altura variable */
+#canvasContainer{
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.08);
+  width:100%;
+  max-height: 500px; /* Límite de altura para activar la barra de scroll */
+  overflow-x: auto;
+  overflow-y: auto;  /* Habilita la barra de desplazamiento vertical si la operación es muy larga */
+}
+canvas{display:block;width:100%}
+</style></head><body>
+<div class="box">
+<div class="panel">
+<input type="text" id="expr" value="(5-(6))^3" readonly>
+<div class="actions">
+<button onclick="render()">▶ Resolver</button>
+<button class="save" onclick="guardarPNG()">💾 Guardar PNG</button>
+<button class="rst" onclick="resetear()">🔄 RESET</button>
+</div>
+</div>
+<div class="keyb">
+<button class="clr" onclick="document.getElementById('expr').value=''">C</button><button class="op" onclick="teclear('(')">(</button><button class="op" onclick="teclear(')')">)</button><button class="del" onclick="let i=document.getElementById('expr');i.value=i.value.slice(0,-1)">⌫</button>
+<button onclick="teclear('7')">7</button><button onclick="teclear('8')">8</button><button onclick="teclear('9')">9</button><button class="op" onclick="teclear(':')">:</button>
+<button onclick="teclear('4')">4</button><button onclick="teclear('5')">5</button><button onclick="teclear('6')">6</button><button class="op" onclick="teclear('*')">*</button>
+<button onclick="teclear('1')">1</button><button onclick="teclear('2')">2</button><button onclick="teclear('3')">3</button><button class="op" onclick="teclear('-')">-</button>
+<button onclick="teclear('0')">0</button><button class="op" onclick="teclear('^')">^</button><button class="op" style="grid-column:span 2" onclick="teclear('+')">+</button>
+</div><div id="canvasContainer"><canvas id="cv" width="750" height="520"></canvas></div></div>
+<script>
+function teclear(c){document.getElementById('expr').value+=c}
+function resetear(){document.getElementById('expr').value='';const canvas=document.getElementById('cv'),ctx=canvas.getContext('2d');canvas.height=520;ctx.fillStyle="#ffffff";ctx.fillRect(0,0,canvas.width,canvas.height)}
+function guardarPNG(){const canvas=document.getElementById('cv'),link=document.createElement('a');link.download='resolucion_matematica.png';link.href=canvas.toDataURL();link.click()}
+function validar(s){
+s=s.replace(/\s+/g,'');if(!s)return"La expresión está vacía.";if(/[xX]/.test(s))return"Usa '*' para multiplicar, no la letra 'x'.";
+if(/[^0-9+\-*:\(\)\^]/.test(s))return"Símbolos inválidos. Solo números, paréntesis y +, -, *, :, ^";
+let b=0;for(let i=0;i<s.length;i++){if(s[i]==='(')b++;if(s[i]===')')b--;if(b<0)return"Cierre ')' sin apertura.";}
+if(b>0)return"Te falta cerrar algún paréntesis.";if(/[\+\*:\^]\$/.test(s)||/^[\+\*:\^]/.test(s))return"No puede empezar/terminar con un operador.";
+if(/[\+\-\*:\^][\+\*:\^]/.test(s))return"Dos operadores seguidos incorrectos.";if(/\(\)/.test(s))return"Hay paréntesis vacíos.";
+return null;
+}
+function tokenizar(str){
+str=str.replace(/\s+/g,'').replace(/:/g,'/');const t=[];let i=0;
+while(i<str.length){
+let c=str[i];if(/[0-9]/.test(c)){let n='';while(i<str.length&&/[0-9]/.test(str[i]))n+=str[i++];t.push({type:'NUM',val:parseInt(n)});}
+else if(['+','-','*','/','(',')','^'].includes(c)){
+if(c==='-'){let p=t[t.length-1];if(!p||p.type==='OP'||(p.type==='PAREN'&&p.val==='(')){i++;let n='';while(i<str.length&&/[0-9]/.test(str[i]))n+=str[i++];if(n!==''){t.push({type:'NUM',val:-parseInt(n)});continue;}}}
+let pr=(c==='+'||c==='-')?1:((c==='*'||c==='/')?2:(c==='^'?3:0));
+t.push({type:c==='('||c===')'?'PAREN':'OP',val:c,prec:pr});i++;
+}}return t;
+}
+function evaluarPasoEscuela(tokens){
+let idxP=-1;
+for(let i=0;i<tokens.length;i++){if(tokens[i].type==='PAREN'&&tokens[i].val==='(')idxP=i;}
+
+let inicio=0,fin=tokens.length;
+if(idxP!==-1){
+    inicio=idxP+1;
+    for(let i=inicio;i<tokens.length;i++){
+        if(tokens[i].type==='PAREN'&&tokens[i].val===')'){fin=i;break;}
+    }
+}
+
+if(idxP!==-1 && fin === inicio + 1 && tokens[inicio].type === 'NUM'){
+    return -2;
+}
+
+for(let i=inicio;i<fin;i++){
+    if(tokens[i].type==='OP'&&tokens[i].prec===3){
+        if(i > inicio && tokens[i-1].type === 'NUM'){
+            return i;
+        }
+    }
+}
+for(let i=inicio;i<fin;i++){if(tokens[i].type==='OP'&&tokens[i].prec===2)return i;}
+for(let i=inicio;i<fin;i++){if(tokens[i].type==='OP'&&tokens[i].prec===1)return i;}
+
+return -1;
+}
+function calc(a,op,b){
+if(op==='+')return a+b;if(op==='-')return a-b;if(op==='*')return a*b;
+if(op==='^'){if(b<0)throw new Error("Exponentes negativos no permitidos.");return Math.pow(a,b);}
+if(b===0)throw new Error("División por cero.");if(a%b!==0)throw new Error("División no exacta.");return a/b;
+}
+function generarLineaPasos(tokens,resIdx){
+let textoCompleto="",inicioSubrayado=0,finSubrayado=0;
+for(let i=0;i<tokens.length;i++){
+let t=tokens[i],trozo="";
+if(t.type==='NUM')trozo=t.val<0?`(${t.val})`:`${t.val}`;
+else if(t.type==='PAREN')trozo=t.val;
+else trozo=t.val==='*'?" * ":(t.val==='/'?" : ":(t.val==='^'?"^":` ${t.val} `));
+if(resIdx>=0&&i===resIdx-1)inicioSubrayado=textoCompleto.length;
+textoCompleto+=trozo;
+if(resIdx>=0&&i===resIdx+1)finSubrayado=textoCompleto.length;
+}
+return{text:textoCompleto,start:resIdx>=0?inicioSubrayado:0,end:resIdx>=0?finSubrayado:0,subrayar:resIdx>=0};
+}
+function dibujaRectanguloRedondeado(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    if (fillStyle) {
+        ctx.fillStyle = fillStyle;
+        ctx.fill();
+    }
+    if (strokeStyle) {
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+}
+function render(){
+const canvas=document.getElementById('cv'),ctx=canvas.getContext('2d');
+const inp=document.getElementById('expr').value,err=validar(inp);
+
+// Recalcular y reajustar altura dinámica si es necesario
+let pasosTemp = [];
+if(!err){
+    try{
+        let t=tokenizar(inp),seg=0;
+        while(seg++<40){
+            let opIdx=evaluarPasoEscuela(t);if(opIdx===-1)break;
+            if(opIdx===-2){
+                let idxP=-1; for(let i=0;i<t.length;i++){if(t[i].type==='PAREN'&&t[i].val==='(')idxP=i;}
+                let finP=-1; for(let i=idxP+1;i<t.length;i++){if(t[i].type==='PAREN'&&t[i].val===')'){finP=i;break;}}
+                t.splice(finP,1);t.splice(idxP,1);continue;
+            }
+            pasosTemp.push(generarLineaPasos(t,opIdx));
+            let res=calc(t[opIdx-1].val,t[opIdx].val,t[opIdx+1].val);
+            t.splice(opIdx-1,3,{type:'NUM',val:res});
+        }
+        pasosTemp.push(generarLineaPasos(t,-1));
+    }catch(e){}
+}
+
+// Calcular la altura requerida para que quepan todos los pasos
+const alturaRequerida = 110 + (pasosTemp.length * 45) + 30;
+canvas.height = Math.max(520, alturaRequerida);
+
+ctx.fillStyle="#fff";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+if(err){ctx.font="bold 16px Arial";ctx.fillStyle="#dc2626";ctx.fillText("❌ "+err,40,50);return;}
+
+// Encabezado
+const labelTexto = "OPERACIÓN A CALCULAR:";
+ctx.font = "bold 13px 'Segoe UI', system-ui, -apple-system, sans-serif";
+const widthLabel = ctx.measureText(labelTexto).width;
+
+ctx.font = "bold 20px 'Fira Code', 'Courier New', monospace";
+const widthExpr = ctx.measureText(inp).width;
+
+const x = 40, y = 25;
+const paddingX = 14;
+const anchoBadge = widthLabel + widthExpr + 20 + (paddingX * 2);
+const altoBadge = 38;
+
+dibujaRectanguloRedondeado(ctx, x, y, anchoBadge, altoBadge, 8, "#f1f5f9", "#cbd5e1");
+
+ctx.font = "bold 13px 'Segoe UI', system-ui, -apple-system, sans-serif";
+ctx.fillStyle = "#64748b";
+ctx.fillText(labelTexto, x + paddingX, y + 24);
+
+ctx.font = "bold 20px 'Fira Code', 'Courier New', monospace";
+ctx.fillStyle = "#1e293b";
+ctx.fillText(inp, x + paddingX + widthLabel + 12, y + 26);
+
+try{
+let pasos = pasosTemp;
+let yPasos=110;
+pasos.forEach((p,idx)=>{
+let esUltima = (idx === pasos.length - 1);
+ctx.font=esUltima?"bold 24px Courier New":"20px Courier New";
+ctx.fillStyle=esUltima?"#10b981":"#1e293b";
+let prefijo=idx>0?"= ":"";let txtARenderizar=prefijo+p.text;ctx.fillText(txtARenderizar,40,yPasos);
+if(p.subrayar){
+let offsetPrefijo=ctx.measureText(prefijo).width;
+let startX=40+offsetPrefijo+ctx.measureText(p.text.substring(0,p.start)).width;
+let targetW=ctx.measureText(p.text.substring(p.start,p.end)).width;
+ctx.strokeStyle="#ef4444";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(startX,yPasos+4);ctx.lineTo(startX+targetW,yPasos+4);ctx.stroke();
+}yPasos+=45;
+});
+}catch(e){ctx.font="bold 16px Arial";ctx.fillStyle="#dc2626";ctx.fillText("❌ "+e.message,40,110)}
+}window.onload=render;
+</script></body></html>
